@@ -1,0 +1,34 @@
+version: '3'
+
+networks:
+  web:
+    name: web
+
+services:
+  reverse-proxy:
+    restart: always
+    image: traefik:v2.3
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+      - "--certificatesresolvers.phpmx.acme.tlschallenge=true"
+      - "--certificatesresolvers.phpmx.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.phpmx.acme.email=hola@phpmexico.mx"
+      - "--certificatesresolvers.phpmx.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "443:443"
+      - "80:80"
+    labels:
+      - "traefik.docker.network=web"
+    networks:
+      - web
+    volumes:
+      - ./letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock
+
